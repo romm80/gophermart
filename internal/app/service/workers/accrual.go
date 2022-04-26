@@ -34,27 +34,35 @@ func (r *AccrualWorker) Run(services *service.Services) {
 					Timeout: 5 * time.Second,
 				}
 				resp, err := client.Get(fmt.Sprintf("%s/%s", server.CFG.Accrual, task.Order))
-				if err != nil || resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusTooManyRequests {
+				if err != nil {
+					log.Println(err)
+				}
+
+				if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusTooManyRequests {
 					time.Sleep(time.Minute)
 					r.Add(task.User, task.Order)
+					resp.Body.Close()
 					continue
 				}
 
 				var order models.AccrualOrder
 				if err := json.NewDecoder(resp.Body).Decode(&order); err != nil {
 					log.Println(err)
+					resp.Body.Close()
 					continue
 				}
 
 				if err := services.OrdersService.UpdateOrder(order); err != nil {
 					log.Println(err)
+					resp.Body.Close()
 					continue
 				}
 				if err := services.BalancesService.Accrual(task.User, order); err != nil {
 					log.Println(err)
+					resp.Body.Close()
 					continue
 				}
-
+				resp.Body.Close()
 				if order.Status != models.PROCESSED && order.Status != models.INVALID {
 					r.Add(task.User, task.Order)
 				}
