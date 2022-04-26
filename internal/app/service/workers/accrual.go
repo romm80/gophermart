@@ -33,7 +33,7 @@ func (r *AccrualWorker) Run(services *service.Services) {
 				client := http.Client{
 					Timeout: 5 * time.Second,
 				}
-				resp, err := client.Get(fmt.Sprintf("%s/%s", server.CFG.Accrual, task.Order))
+				resp, err := client.Get(fmt.Sprintf("%s/%s/%s", server.CFG.Accrual, "/api/orders/", task.Order))
 				if err != nil {
 					log.Println(err)
 				}
