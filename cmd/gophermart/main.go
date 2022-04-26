@@ -3,15 +3,14 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/romm80/gophermart.git/internal/app/api"
 	"github.com/romm80/gophermart.git/internal/app/server"
 	"github.com/romm80/gophermart.git/internal/app/service"
 	"github.com/romm80/gophermart.git/internal/app/storage"
 	"github.com/romm80/gophermart.git/internal/app/storage/postgres"
 	"log"
-
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {

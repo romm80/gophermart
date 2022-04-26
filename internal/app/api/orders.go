@@ -36,6 +36,7 @@ func (a *API) uploadOrder(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+
 	c.Status(http.StatusAccepted)
 }
 

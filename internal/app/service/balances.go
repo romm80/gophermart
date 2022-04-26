@@ -6,11 +6,6 @@ import (
 	"github.com/romm80/gophermart.git/internal/app/storage"
 )
 
-const (
-	EXPENSE = "expense"
-	RECEIPT = "receipt"
-)
-
 type Balances struct {
 	store storage.BalancesStore
 }
@@ -33,4 +28,8 @@ func (b *Balances) Withdraw(user string, order models.OrderBalance) error {
 
 func (b *Balances) Withdrawals(user string) ([]models.OrderBalance, error) {
 	return b.store.Withdrawals(user)
+}
+
+func (b *Balances) Accrual(user string, order models.AccrualOrder) error {
+	return b.store.Accrual(user, order)
 }

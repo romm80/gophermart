@@ -6,7 +6,12 @@ import (
 	"time"
 )
 
-const TimeFormat = time.RFC3339
+const (
+	TimeFormat = time.RFC3339
+	NEW        = "NEW"
+	INVALID    = "INVALID"
+	PROCESSED  = "PROCESSED"
+)
 
 type CustomTime struct {
 	time.Time
@@ -41,4 +46,10 @@ type OrderBalance struct {
 	Order       string          `json:"order"`
 	Sum         decimal.Decimal `json:"sum"`
 	ProcessedAt CustomTime      `json:"processed_at,omitempty"`
+}
+
+type AccrualOrder struct {
+	Order   string          `json:"order"`
+	Status  string          `json:"status"`
+	Accrual decimal.Decimal `json:"accrual"`
 }

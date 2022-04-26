@@ -87,7 +87,23 @@ func (b *BalancesDB) Withdrawals(user string) ([]models.OrderBalance, error) {
 		if err := rows.Scan(&order.Order, &order.Sum, &order.ProcessedAt.Time); err != nil {
 			return nil, err
 		}
+		order.Sum.Neg()
 		orders = append(orders, *order)
 	}
 	return orders, nil
+}
+
+func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
+	ctx := context.Background()
+	conn, err := b.pool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	_, err = conn.Exec(ctx, `INSERT INTO balances(processed_at, "user", "order", sum) VALUES ($1, $2, $3, $4);`, time.Now(), user, order.Order, order.Accrual)
+	if err != nil {
+		return err
+	}
+	return nil
 }

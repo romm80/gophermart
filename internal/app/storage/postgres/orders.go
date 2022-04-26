@@ -75,3 +75,16 @@ func (o *OrdersDB) GetOrders(user string) ([]models.Order, error) {
 	}
 	return orders, nil
 }
+
+func (o *OrdersDB) UpdateOrder(order models.AccrualOrder) error {
+	ctx := context.Background()
+	conn, err := o.pool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+
+	_, err = conn.Exec(ctx, `UPDATE orders SET status=($2), accrual=($3) WHERE "number"=($1)`, order.Order, order.Status, order.Accrual)
+
+	return err
+}

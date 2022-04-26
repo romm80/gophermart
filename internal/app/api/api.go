@@ -3,17 +3,25 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app/service"
+	"github.com/romm80/gophermart.git/internal/app/service/workers"
 	"net/http"
 )
 
 const authHeader = "Authorization"
 
 type API struct {
-	Services *service.Services
+	Services      *service.Services
+	AccrualWorker *workers.AccrualWorker
 }
 
 func NewAPI(services *service.Services) *API {
-	return &API{Services: services}
+	worker := workers.NewDeleteWorker(1000)
+	worker.Run(services)
+
+	return &API{
+		Services:      services,
+		AccrualWorker: worker,
+	}
 }
 
 func (a *API) mainHandler(c *gin.Context) {

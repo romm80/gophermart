@@ -13,6 +13,7 @@ type AuthService interface {
 
 type OrdersService interface {
 	UploadOrder(user, order string) error
+	UpdateOrder(order models.AccrualOrder) error
 	GetOrders(user string) ([]models.Order, error)
 }
 
@@ -20,6 +21,7 @@ type BalancesService interface {
 	CurrentBalance(user string) (*models.CurrentBalance, error)
 	Withdraw(user string, order models.OrderBalance) error
 	Withdrawals(user string) ([]models.OrderBalance, error)
+	Accrual(user string, order models.AccrualOrder) error
 }
 
 type Services struct {

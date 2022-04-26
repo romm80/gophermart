@@ -7,13 +7,6 @@ import (
 	"strconv"
 )
 
-const (
-	NEW        = "NEW"
-	PROCESSING = "PROCESSING"
-	INVALID    = "INVALID"
-	PROCESSED  = "PROCESSED"
-)
-
 type Orders struct {
 	store storage.OrdersStore
 }
@@ -30,9 +23,10 @@ func (o *Orders) UploadOrder(user, number string) error {
 	if !checkLuhn(number) {
 		return app.ErrInvalidOrderFormat
 	}
+
 	order := models.Order{
 		Number: number,
-		Status: NEW,
+		Status: models.NEW,
 		User:   user,
 	}
 
@@ -41,4 +35,8 @@ func (o *Orders) UploadOrder(user, number string) error {
 
 func (o *Orders) GetOrders(user string) ([]models.Order, error) {
 	return o.store.GetOrders(user)
+}
+
+func (o *Orders) UpdateOrder(order models.AccrualOrder) error {
+	return o.store.UpdateOrder(order)
 }
