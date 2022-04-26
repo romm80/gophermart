@@ -33,8 +33,8 @@ type Services struct {
 func checkLuhn(order string) bool {
 	sum := 0
 	f := false
-	for _, s := range order {
-		num, _ := strconv.Atoi(string(s))
+	for i := len(order) - 1; i >= 0; i-- {
+		num, _ := strconv.Atoi(string(order[i]))
 		if f {
 			num *= 2
 			if num > 9 {
