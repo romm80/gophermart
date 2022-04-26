@@ -21,6 +21,7 @@ func main() {
 	flag.StringVar(&server.CFG.DB, "d", server.CFG.DB, "Database address")
 	flag.StringVar(&server.CFG.Accrual, "r", server.CFG.Accrual, "Accrual address")
 	flag.Parse()
+	log.Println(server.CFG.Accrual)
 	server.CFG.Key = []byte("secret_key")
 
 	dbpool, err := postgres.NewPostgresDB()
