@@ -6,6 +6,7 @@ import (
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
 	"github.com/shopspring/decimal"
+	"log"
 	"time"
 )
 
@@ -105,5 +106,22 @@ func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
 	if err != nil {
 		return err
 	}
+
+	rows, err := conn.Query(ctx, `SELECT processed_at, "user", "order", sum FROM balances`)
+	if err != nil {
+		return nil
+		log.Println(err)
+	}
+
+	for rows.Next() {
+		var usr string
+		order := &models.OrderBalance{}
+		if err := rows.Scan(&order.ProcessedAt, &usr, &order.Order, &order.Sum); err != nil {
+			log.Println(err)
+			return nil
+		}
+		log.Println(usr, order)
+	}
+
 	return nil
 }

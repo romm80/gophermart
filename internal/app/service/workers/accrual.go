@@ -62,6 +62,8 @@ func (r *AccrualWorker) Run(services *service.Services) {
 					resp.Body.Close()
 					continue
 				}
+				log.Println(task.User)
+				log.Println(order)
 				resp.Body.Close()
 				if order.Status != models.PROCESSED && order.Status != models.INVALID {
 					r.Add(task.User, task.Order)
