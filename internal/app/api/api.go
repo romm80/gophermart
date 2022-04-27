@@ -15,7 +15,7 @@ type API struct {
 }
 
 func NewAPI(services *service.Services) *API {
-	worker := workers.NewDeleteWorker(1000)
+	worker := workers.NewAccrualWorker(1000)
 	worker.Run(services)
 
 	return &API{

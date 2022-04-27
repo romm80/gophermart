@@ -20,7 +20,7 @@ type AccrualWorker struct {
 	Tasks chan Task
 }
 
-func NewDeleteWorker(size int) *AccrualWorker {
+func NewAccrualWorker(size int) *AccrualWorker {
 	return &AccrualWorker{
 		Tasks: make(chan Task, size),
 	}
