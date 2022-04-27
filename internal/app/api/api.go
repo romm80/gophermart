@@ -38,6 +38,7 @@ func (a *API) RoutingInit() *gin.Engine {
 	user.POST("/login", a.loginUser)
 
 	user.Use(a.authMiddleware)
+	user.Use(a.gzipMiddleware)
 
 	orders := user.Group("/orders")
 	orders.POST("", a.uploadOrder)
