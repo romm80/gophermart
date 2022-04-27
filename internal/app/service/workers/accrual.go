@@ -33,11 +33,11 @@ func (r *AccrualWorker) Run(services *service.Services) {
 				client := http.Client{
 					Timeout: 5 * time.Second,
 				}
-				resp, err := client.Get(fmt.Sprintf("%s/%s/%s", server.CFG.Accrual, "/api/orders/", task.Order))
+				resp, err := client.Get(fmt.Sprintf("%s/%s/%s", server.CFG.Accrual, "api/orders", task.Order))
 				if err != nil {
 					log.Println(err)
 				}
-				log.Println(fmt.Sprintf("%s/%s/%s", server.CFG.Accrual, "/api/orders/", task.Order))
+				log.Println(fmt.Sprintf("%s/%s/%s", server.CFG.Accrual, "api/orders", task.Order))
 				log.Println(resp.Status)
 				if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusTooManyRequests {
 					time.Sleep(time.Minute)
