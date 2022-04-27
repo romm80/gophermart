@@ -116,7 +116,7 @@ func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
 	for rows.Next() {
 		var usr string
 		order := &models.OrderBalance{}
-		if err := rows.Scan(&order.ProcessedAt, &usr, &order.Order, &order.Sum); err != nil {
+		if err := rows.Scan(&order.ProcessedAt.Time, &usr, &order.Order, &order.Sum); err != nil {
 			log.Println(err)
 			return nil
 		}
