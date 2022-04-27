@@ -16,7 +16,7 @@ type OrdersStore interface {
 }
 
 type BalancesStore interface {
-	CurrentBalance(user string) (*models.CurrentBalance, error)
+	CurrentBalance(user string) (models.CurrentBalance, error)
 	Withdraw(user string, order models.OrderBalance) error
 	Withdrawals(user string) ([]models.OrderBalance, error)
 	Accrual(user string, order models.AccrualOrder) error

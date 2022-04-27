@@ -14,7 +14,7 @@ func NewBalances(store storage.BalancesStore) *Balances {
 	return &Balances{store: store}
 }
 
-func (b *Balances) CurrentBalance(user string) (*models.CurrentBalance, error) {
+func (b *Balances) CurrentBalance(user string) (models.CurrentBalance, error) {
 	return b.store.CurrentBalance(user)
 }
 

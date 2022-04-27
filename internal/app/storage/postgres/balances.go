@@ -18,7 +18,7 @@ func NewBalancesDB(pool *pgxpool.Pool) *BalancesDB {
 	return &BalancesDB{pool: pool}
 }
 
-func (b *BalancesDB) CurrentBalance(user string) (*models.CurrentBalance, error) {
+func (b *BalancesDB) CurrentBalance(user string) (models.CurrentBalance, error) {
 	sqlBalance := `SELECT SUM(current) AS current, SUM(withdrawn) AS withdrawn FROM
 						(SELECT SUM(sum) AS current, 0 AS withdrawn
 							FROM balances
@@ -28,25 +28,22 @@ func (b *BalancesDB) CurrentBalance(user string) (*models.CurrentBalance, error)
 							FROM balances
 						WHERE "user" = ($1) AND sum < 0) AS tmp;`
 
+	balance := models.CurrentBalance{}
 	ctx := context.Background()
 	conn, err := b.pool.Acquire(ctx)
 	if err != nil {
-		return nil, err
+		return balance, err
 	}
 	defer conn.Release()
 
-	var Current, Withdrawn float64
-	err = conn.QueryRow(ctx, sqlBalance, user).Scan(&Current, &Withdrawn)
+	err = conn.QueryRow(ctx, sqlBalance, user).Scan(&balance.Current, &balance.Withdrawn)
 	if err != nil {
-		return nil, err
+		return balance, err
 	}
 
-	log.Println("CurrentBalance", user, Current, Withdrawn)
+	log.Println("CurrentBalance", user, balance)
 
-	return &models.CurrentBalance{
-		Current:   decimal.NewFromFloat(Current),
-		Withdrawn: decimal.NewFromFloat(Withdrawn),
-	}, nil
+	return balance, nil
 }
 
 func (b *BalancesDB) Withdraw(user string, order models.OrderBalance) error {
@@ -111,8 +108,8 @@ func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
 
 	rows, err := conn.Query(ctx, `SELECT processed_at, "user", "order", sum FROM balances`)
 	if err != nil {
-		return nil
 		log.Println(err)
+		return nil
 	}
 
 	for rows.Next() {
