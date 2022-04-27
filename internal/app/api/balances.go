@@ -16,8 +16,17 @@ func (a *API) getBalance(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	log.Println("getBalance", balance)
-	c.JSON(http.StatusOK, balance)
+
+	type bal struct {
+		Current   float64 `json:"current"`
+		Withdrawn float64 `json:"withdrawn"`
+	}
+	b := bal{}
+	b.Current, _ = balance.Current.Float64()
+	b.Withdrawn, _ = balance.Withdrawn.Float64()
+
+	log.Println("getBalance", b)
+	c.JSON(http.StatusOK, b)
 }
 
 func (a *API) withdraw(c *gin.Context) {
