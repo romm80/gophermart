@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -38,18 +37,18 @@ type Order struct {
 }
 
 type CurrentBalance struct {
-	Current   decimal.Decimal `json:"current"`
-	Withdrawn decimal.Decimal `json:"withdrawn"`
+	Current   float64 `json:"current"`
+	Withdrawn float64 `json:"withdrawn"`
 }
 
 type OrderBalance struct {
-	Order       string          `json:"order"`
-	Sum         decimal.Decimal `json:"sum"`
-	ProcessedAt CustomTime      `json:"processed_at,omitempty"`
+	Order       string     `json:"order"`
+	Sum         float64    `json:"sum"`
+	ProcessedAt CustomTime `json:"processed_at,omitempty"`
 }
 
 type AccrualOrder struct {
-	Order   string          `json:"order"`
-	Status  string          `json:"status"`
-	Accrual decimal.Decimal `json:"accrual"`
+	Order   string  `json:"order"`
+	Status  string  `json:"status"`
+	Accrual float64 `json:"accrual"`
 }
