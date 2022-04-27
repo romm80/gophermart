@@ -52,7 +52,7 @@ func (r *AccrualWorker) Run(services *service.Services) {
 					resp.Body.Close()
 					continue
 				}
-
+				log.Println(order)
 				if err := services.OrdersService.UpdateOrder(order); err != nil {
 					log.Println(err)
 					resp.Body.Close()
