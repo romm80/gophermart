@@ -37,7 +37,8 @@ func (r *AccrualWorker) Run(services *service.Services) {
 				if err != nil {
 					log.Println(err)
 				}
-
+				log.Println(fmt.Sprintf("%s/%s/%s", server.CFG.Accrual, "/api/orders/", task.Order))
+				log.Println(resp.Status)
 				if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusTooManyRequests {
 					time.Sleep(time.Minute)
 					r.Add(task.User, task.Order)
