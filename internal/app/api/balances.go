@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
+	"log"
 	"net/http"
 )
 
@@ -15,7 +16,7 @@ func (a *API) getBalance(c *gin.Context) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-
+	log.Println("getBalance", balance)
 	c.JSON(http.StatusOK, balance)
 }
 
