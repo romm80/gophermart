@@ -6,7 +6,6 @@ import (
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
 	"github.com/shopspring/decimal"
-	"log"
 	"time"
 )
 
@@ -106,6 +105,5 @@ func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
 	if err != nil {
 		return err
 	}
-	log.Println(time.Now(), user, order.Order, order.Accrual)
 	return nil
 }
