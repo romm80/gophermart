@@ -51,7 +51,10 @@ func (b *BalancesDB) Withdraw(user string, order models.OrderBalance) error {
 	if err != nil {
 		return err
 	}
-	if balance.Current.Sub(order.Sum).LessThan(decimal.Zero) {
+
+	current := decimal.NewFromFloat(balance.Current)
+	sum := decimal.NewFromFloat(order.Sum)
+	if current.Sub(sum).LessThan(decimal.Zero) {
 		return app.ErrNotEnoughFunds
 	}
 
@@ -62,7 +65,7 @@ func (b *BalancesDB) Withdraw(user string, order models.OrderBalance) error {
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, `INSERT INTO balances(processed_at, "user", "order", sum) VALUES ($1, $2, $3, $4);`, time.Now(), user, order.Order, order.Sum.Neg())
+	_, err = conn.Exec(ctx, `INSERT INTO balances(processed_at, "user", "order", sum) VALUES ($1, $2, $3, $4);`, time.Now(), user, order.Order, sum.Neg())
 	if err != nil {
 		return err
 	}
@@ -87,7 +90,7 @@ func (b *BalancesDB) Withdrawals(user string) ([]models.OrderBalance, error) {
 		if err := rows.Scan(&order.Order, &order.Sum, &order.ProcessedAt.Time); err != nil {
 			return nil, err
 		}
-		order.Sum.Neg()
+		order.Sum = -order.Sum
 		orders = append(orders, *order)
 	}
 	return orders, nil

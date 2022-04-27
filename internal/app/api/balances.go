@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
-	"log"
 	"net/http"
 )
 
@@ -17,16 +16,7 @@ func (a *API) getBalance(c *gin.Context) {
 		return
 	}
 
-	type bal struct {
-		Current   float64 `json:"current"`
-		Withdrawn float64 `json:"withdrawn"`
-	}
-	b := bal{}
-	b.Current, _ = balance.Current.Float64()
-	b.Withdrawn, _ = balance.Withdrawn.Float64()
-
-	log.Println("getBalance", b)
-	c.JSON(http.StatusOK, b)
+	c.JSON(http.StatusOK, balance)
 }
 
 func (a *API) withdraw(c *gin.Context) {
