@@ -40,8 +40,7 @@ func (b *BalancesDB) CurrentBalance(user string) (models.CurrentBalance, error) 
 	if err != nil {
 		return balance, err
 	}
-
-	log.Println("CurrentBalance", user, balance)
+	balance.Withdrawn = -balance.Withdrawn
 
 	return balance, nil
 }
