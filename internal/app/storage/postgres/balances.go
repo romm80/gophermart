@@ -41,6 +41,8 @@ func (b *BalancesDB) CurrentBalance(user string) (*models.CurrentBalance, error)
 		return nil, err
 	}
 
+	log.Println("CurrentBalance", user, Current, Withdrawn)
+
 	return &models.CurrentBalance{
 		Current:   decimal.NewFromFloat(Current),
 		Withdrawn: decimal.NewFromFloat(Withdrawn),
