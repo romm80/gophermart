@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/romm80/gophermart.git/internal/app/server"
 	"github.com/romm80/gophermart.git/internal/app/service"
 	"github.com/romm80/gophermart.git/internal/app/service/workers"
 	"net/http"
@@ -15,7 +16,7 @@ type API struct {
 }
 
 func NewAPI(services *service.Services) *API {
-	worker := workers.NewAccrualWorker(1000)
+	worker := workers.NewAccrualWorker(server.CFG.WorkerPoolSize)
 	worker.Run(services)
 
 	return &API{
@@ -37,8 +38,10 @@ func (a *API) RoutingInit() *gin.Engine {
 	user.POST("/register", a.registerUser)
 	user.POST("/login", a.loginUser)
 
-	user.Use(a.authMiddleware)
-	user.Use(a.gzipMiddleware)
+	user.Use(
+		a.authMiddleware,
+		a.gzipMiddleware,
+	)
 
 	orders := user.Group("/orders")
 	orders.POST("", a.uploadOrder)

@@ -15,7 +15,7 @@ func NewOrders(store storage.OrdersStore) *Orders {
 	return &Orders{store: store}
 }
 
-func (o *Orders) UploadOrder(user, number string) error {
+func (o *Orders) UploadOrder(userID int, number string) error {
 	_, err := strconv.Atoi(number)
 	if err != nil {
 		return app.ErrInvalidRequestFormat
@@ -26,15 +26,15 @@ func (o *Orders) UploadOrder(user, number string) error {
 
 	order := models.Order{
 		Number: number,
-		Status: models.NEW,
-		User:   user,
+		Status: models.OrderStatusNew,
+		UserID: userID,
 	}
 
 	return o.store.AddOrder(order)
 }
 
-func (o *Orders) GetOrders(user string) ([]models.Order, error) {
-	return o.store.GetOrders(user)
+func (o *Orders) GetOrders(userID int) ([]models.Order, error) {
+	return o.store.GetOrders(userID)
 }
 
 func (o *Orders) UpdateOrder(order models.AccrualOrder) error {

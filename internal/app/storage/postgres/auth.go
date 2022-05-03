@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"errors"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
@@ -15,36 +17,45 @@ func NewAuthDB(pool *pgxpool.Pool) *AuthDB {
 	return &AuthDB{pool: pool}
 }
 
-func (a *AuthDB) CreateUser(user models.User) error {
+func (a *AuthDB) CreateUser(user models.User) (int, error) {
+	var userID int
 	ctx := context.Background()
 	conn, err := a.pool.Acquire(ctx)
 	if err != nil {
-		return err
+		return userID, err
 	}
 	defer conn.Release()
 
-	tx, err := conn.Begin(ctx)
+	err = conn.QueryRow(ctx, `INSERT INTO users (login, password) VALUES($1, $2) ON CONFLICT DO NOTHING RETURNING id`, user.Login, user.Password).Scan(&userID)
 	if err != nil {
-		return err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return userID, app.ErrLoginIsUsed
+		}
+		return userID, err
 	}
-	defer tx.Rollback(ctx)
-
-	rows, err := tx.Query(ctx, `SELECT login FROM users WHERE login = ($1)`, user.Login)
-	if err != nil {
-		return err
-	}
-	if rows.Next() {
-		return app.ErrLoginIsUsed
-	}
-
-	if _, err := tx.Exec(ctx, `INSERT INTO users (login, password) VALUES($1, $2)`, user.Login, user.Password); err != nil {
-		return err
-	}
-
-	return tx.Commit(ctx)
+	return userID, nil
 }
 
-func (a *AuthDB) GetUser(user models.User) error {
+func (a *AuthDB) GetUserID(user models.User) (int, error) {
+	var userID int
+	ctx := context.Background()
+	conn, err := a.pool.Acquire(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer conn.Release()
+
+	err = conn.QueryRow(ctx, `SELECT id FROM users WHERE login = ($1) AND password = ($2)`, user.Login, user.Password).Scan(&userID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, app.ErrInvalidLoginOrPassword
+		}
+		return 0, err
+	}
+	return userID, nil
+}
+
+func (a *AuthDB) ValidUserID(userID int) error {
 	ctx := context.Background()
 	conn, err := a.pool.Acquire(ctx)
 	if err != nil {
@@ -52,12 +63,13 @@ func (a *AuthDB) GetUser(user models.User) error {
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, `SELECT login FROM users WHERE login = ($1) AND password = ($2)`, user.Login, user.Password)
+	rows, err := conn.Query(ctx, `SELECT 1 FROM users WHERE id = ($1)`, userID)
 	if err != nil {
 		return err
 	}
-	if !rows.Next() {
-		return app.ErrInvalidLoginOrPassword
+
+	if rows.Next() {
+		return nil
 	}
-	return nil
+	return app.ErrInvalidUserID
 }

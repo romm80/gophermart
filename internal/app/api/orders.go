@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app"
+	"github.com/romm80/gophermart.git/internal/app/service/workers"
 	"io/ioutil"
 	"net/http"
 )
@@ -15,33 +16,37 @@ func (a *API) uploadOrder(c *gin.Context) {
 		return
 	}
 
-	err = a.Services.OrdersService.UploadOrder(c.GetString("user"), string(order))
+	userID := c.GetInt("user_id")
+	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
+		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
+
+	err = a.Services.OrdersService.UploadOrder(userID, string(order))
 	if err != nil {
-		if errors.Is(err, app.ErrInvalidRequestFormat) {
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-		if errors.Is(err, app.ErrInvalidOrderFormat) {
-			c.AbortWithStatus(http.StatusUnprocessableEntity)
-			return
-		}
-		if errors.Is(err, app.ErrOrderUploadedAnotherUser) {
-			c.AbortWithStatus(http.StatusConflict)
-			return
-		}
 		if errors.Is(err, app.ErrOrderUploaded) {
 			c.Status(http.StatusOK)
 			return
 		}
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}
-	a.AccrualWorker.Add(c.GetString("user"), string(order))
+
+	a.AccrualWorker.QueueTask(workers.Task{
+		UserID: userID,
+		Order:  string(order),
+	})
 	c.Status(http.StatusAccepted)
 }
 
 func (a *API) getOrders(c *gin.Context) {
-	orders, err := a.Services.GetOrders(c.GetString("user"))
+	userID := c.GetInt("user_id")
+	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
+		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
+
+	orders, err := a.Services.GetOrders(userID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

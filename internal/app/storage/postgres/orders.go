@@ -29,31 +29,32 @@ func (o *OrdersDB) AddOrder(order models.Order) error {
 	}
 	defer tx.Rollback(ctx)
 
-	rows, err := tx.Query(ctx, `SELECT "user", "number" FROM orders WHERE "number" = ($1)`, order.Number)
+	rows, err := tx.Query(ctx, `SELECT user_id, "number" FROM orders WHERE "number" = ($1)`, order.Number)
 	if err != nil {
 		return err
 	}
 	if rows.Next() {
-		var usr, num string
+		var usr int
+		var num string
 		if err := rows.Scan(&usr, &num); err != nil {
 			return err
 		}
 		if num == order.Number {
-			if usr == order.User {
+			if usr == order.UserID {
 				return app.ErrOrderUploaded
 			}
 			return app.ErrOrderUploadedAnotherUser
 		}
 	}
 
-	if _, err := tx.Exec(ctx, `INSERT INTO orders ("user", "number", status) VALUES($1, $2, $3)`, order.User, order.Number, order.Status); err != nil {
+	if _, err := tx.Exec(ctx, `INSERT INTO orders (user_id, "number", status) VALUES($1, $2, $3)`, order.UserID, order.Number, order.Status); err != nil {
 		return err
 	}
 
 	return tx.Commit(ctx)
 }
 
-func (o *OrdersDB) GetOrders(user string) ([]models.Order, error) {
+func (o *OrdersDB) GetOrders(userID int) ([]models.Order, error) {
 	ctx := context.Background()
 	conn, err := o.pool.Acquire(ctx)
 	if err != nil {
@@ -61,17 +62,17 @@ func (o *OrdersDB) GetOrders(user string) ([]models.Order, error) {
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, `SELECT "number", status, accrual, uploaded_at FROM orders WHERE "user" = ($1)`, user)
+	rows, err := conn.Query(ctx, `SELECT "number", status, accrual, uploaded_at FROM orders WHERE user_id = ($1)`, userID)
 	if err != nil {
 		return nil, err
 	}
 	orders := make([]models.Order, 0)
 	for rows.Next() {
-		order := &models.Order{}
+		order := models.Order{}
 		if err := rows.Scan(&order.Number, &order.Status, &order.Accrual, &order.UploadedAt.Time); err != nil {
 			return nil, err
 		}
-		orders = append(orders, *order)
+		orders = append(orders, order)
 	}
 	return orders, nil
 }

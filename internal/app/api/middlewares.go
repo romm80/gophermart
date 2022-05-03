@@ -3,6 +3,7 @@ package api
 import (
 	"compress/gzip"
 	"github.com/gin-gonic/gin"
+	"github.com/romm80/gophermart.git/internal/app"
 	"net/http"
 	"strings"
 )
@@ -44,11 +45,12 @@ func (a *API) authMiddleware(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 
-	login, err := a.Services.ParseToken(token)
+	userID, err := a.Services.ParseToken(token)
 	if err != nil {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}
-	c.Set("user", login)
+
+	c.Set("user_id", userID)
 	c.Next()
 }

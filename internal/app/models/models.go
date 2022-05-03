@@ -1,15 +1,19 @@
 package models
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/shopspring/decimal"
 	"time"
 )
 
+type OrderStatus string
+
 const (
-	TimeFormat = time.RFC3339
-	NEW        = "NEW"
-	INVALID    = "INVALID"
-	PROCESSED  = "PROCESSED"
+	TimeFormat                       = time.RFC3339
+	OrderStatusNew       OrderStatus = "NEW"
+	OrderStatusInvalid   OrderStatus = "INVALID"
+	OrderStatusProcessed OrderStatus = "PROCESSED"
 )
 
 type CustomTime struct {
@@ -23,32 +27,41 @@ func (c *CustomTime) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf(`"%s"`, c.Time.Format(TimeFormat))), nil
 }
 
+type CustomDecimal struct {
+	decimal.Decimal
+}
+
+func (c *CustomDecimal) MarshalJSON() ([]byte, error) {
+	n, _ := c.Float64()
+	return json.Marshal(n)
+}
+
 type User struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
 
 type Order struct {
-	User       string     `json:"-"`
-	Number     string     `json:"number"`
-	Status     string     `json:"status"`
-	Accrual    float64    `json:"accrual,omitempty"`
-	UploadedAt CustomTime `json:"uploaded_at"`
+	UserID     int           `json:"-"`
+	Number     string        `json:"number"`
+	Status     OrderStatus   `json:"status"`
+	Accrual    CustomDecimal `json:"accrual,omitempty"`
+	UploadedAt CustomTime    `json:"uploaded_at"`
 }
 
 type CurrentBalance struct {
-	Current   float64 `json:"current"`
-	Withdrawn float64 `json:"withdrawn"`
+	Current   CustomDecimal `json:"current"`
+	Withdrawn CustomDecimal `json:"withdrawn"`
 }
 
 type OrderBalance struct {
-	Order       string     `json:"order"`
-	Sum         float64    `json:"sum"`
-	ProcessedAt CustomTime `json:"processed_at,omitempty"`
+	Order       string        `json:"order"`
+	Sum         CustomDecimal `json:"sum"`
+	ProcessedAt CustomTime    `json:"processed_at,omitempty"`
 }
 
 type AccrualOrder struct {
-	Order   string  `json:"order"`
-	Status  string  `json:"status"`
-	Accrual float64 `json:"accrual"`
+	Order   string        `json:"order"`
+	Status  OrderStatus   `json:"status"`
+	Accrual CustomDecimal `json:"accrual"`
 }

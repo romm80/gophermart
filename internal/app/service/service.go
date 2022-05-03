@@ -6,22 +6,23 @@ import (
 )
 
 type AuthService interface {
-	CreateUser(user models.User) error
-	GenerateToken(user models.User) (string, error)
-	ParseToken(token string) (string, error)
+	CreateUser(user models.User) (string, error)
+	LoginUser(user models.User) (string, error)
+	ParseToken(token string) (int, error)
+	ValidUserID(userID int) error
 }
 
 type OrdersService interface {
-	UploadOrder(user, order string) error
+	UploadOrder(userID int, order string) error
 	UpdateOrder(order models.AccrualOrder) error
-	GetOrders(user string) ([]models.Order, error)
+	GetOrders(userID int) ([]models.Order, error)
 }
 
 type BalancesService interface {
-	CurrentBalance(user string) (*models.CurrentBalance, error)
-	Withdraw(user string, order models.OrderBalance) error
-	Withdrawals(user string) ([]models.OrderBalance, error)
-	Accrual(user string, order models.AccrualOrder) error
+	CurrentBalance(userID int) (*models.CurrentBalance, error)
+	Withdraw(userID int, order models.OrderBalance) error
+	Withdrawals(userID int) ([]models.OrderBalance, error)
+	Accrual(userID int, order models.AccrualOrder) error
 }
 
 type Services struct {

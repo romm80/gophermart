@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
@@ -16,26 +15,12 @@ func (a *API) registerUser(c *gin.Context) {
 		return
 	}
 
-	err := a.Services.CreateUser(user)
+	token, err := a.Services.CreateUser(user)
 	if err != nil {
-		if errors.Is(err, app.ErrLoginIsUsed) {
-			c.AbortWithStatus(http.StatusConflict)
-			return
-		}
-		if errors.Is(err, app.ErrInvalidLoginOrPassword) {
-			c.AbortWithStatus(http.StatusBadRequest)
-			return
-		}
-
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}
 
-	token, err := a.Services.GenerateToken(user)
-	if err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
 	c.Header(authHeader, token)
 	c.Status(http.StatusOK)
 }
@@ -47,15 +32,12 @@ func (a *API) loginUser(c *gin.Context) {
 		return
 	}
 
-	token, err := a.Services.GenerateToken(user)
+	token, err := a.Services.LoginUser(user)
 	if err != nil {
-		if errors.Is(err, app.ErrInvalidLoginOrPassword) {
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}
+
 	c.Header(authHeader, token)
 	c.Status(http.StatusOK)
 }

@@ -13,19 +13,22 @@ type BalancesDB struct {
 	pool *pgxpool.Pool
 }
 
+var sqlInsertBalance = `INSERT INTO balances(processed_at, user_id, order_id, sum)
+						SELECT ($1) AS processed_at, ($2) AS user_id, id AS order_id, ($4) AS sum FROM orders WHERE "number" = ($3);`
+
 func NewBalancesDB(pool *pgxpool.Pool) *BalancesDB {
 	return &BalancesDB{pool: pool}
 }
 
-func (b *BalancesDB) CurrentBalance(user string) (*models.CurrentBalance, error) {
-	sqlBalance := `SELECT SUM(current) AS current, -SUM(withdrawn) AS withdrawn FROM
+func (b *BalancesDB) CurrentBalance(userID int) (*models.CurrentBalance, error) {
+	sqlBalance := `SELECT SUM(current) AS current, SUM(withdrawn) AS withdrawn FROM
 						(SELECT SUM(sum) AS current, 0 AS withdrawn
 							FROM balances
-						WHERE "user" = ($1)	
+						WHERE user_id = ($1)	
 						UNION ALL
-						SELECT 0, SUM(sum)
+						SELECT 0, SUM(ABS(sum))
 							FROM balances
-						WHERE "user" = ($1) AND sum < 0) AS tmp;`
+						WHERE user_id = ($1) AND sum < 0) AS tmp;`
 
 	ctx := context.Background()
 	conn, err := b.pool.Acquire(ctx)
@@ -35,7 +38,7 @@ func (b *BalancesDB) CurrentBalance(user string) (*models.CurrentBalance, error)
 	defer conn.Release()
 
 	balance := &models.CurrentBalance{}
-	err = conn.QueryRow(ctx, sqlBalance, user).Scan(&balance.Current, &balance.Withdrawn)
+	err = conn.QueryRow(ctx, sqlBalance, userID).Scan(&balance.Current, &balance.Withdrawn)
 	if err != nil {
 		return nil, err
 	}
@@ -43,15 +46,13 @@ func (b *BalancesDB) CurrentBalance(user string) (*models.CurrentBalance, error)
 	return balance, nil
 }
 
-func (b *BalancesDB) Withdraw(user string, order models.OrderBalance) error {
-	balance, err := b.CurrentBalance(user)
+func (b *BalancesDB) Withdraw(userID int, order models.OrderBalance) error {
+	balance, err := b.CurrentBalance(userID)
 	if err != nil {
 		return err
 	}
 
-	cur := decimal.NewFromFloat(balance.Current)
-	sum := decimal.NewFromFloat(order.Sum)
-	if cur.Sub(sum).LessThan(decimal.Zero) {
+	if balance.Current.Sub(order.Sum.Decimal).LessThan(decimal.Zero) {
 		return app.ErrNotEnoughFunds
 	}
 
@@ -62,14 +63,14 @@ func (b *BalancesDB) Withdraw(user string, order models.OrderBalance) error {
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, `INSERT INTO balances(processed_at, "user", "order", sum) VALUES ($1, $2, $3, $4);`, time.Now(), user, order.Order, sum.Neg())
+	_, err = conn.Exec(ctx, sqlInsertBalance, time.Now(), userID, order.Order, order.Sum.Neg())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *BalancesDB) Withdrawals(user string) ([]models.OrderBalance, error) {
+func (b *BalancesDB) Withdrawals(userID int) ([]models.OrderBalance, error) {
 	ctx := context.Background()
 	conn, err := b.pool.Acquire(ctx)
 	if err != nil {
@@ -77,7 +78,10 @@ func (b *BalancesDB) Withdrawals(user string) ([]models.OrderBalance, error) {
 	}
 	defer conn.Release()
 
-	rows, err := conn.Query(ctx, `SELECT "order", sum, processed_at FROM balances WHERE "user" = ($1) AND sum < 0;`, user)
+	sql := `SELECT orders.number, ABS(sum), processed_at FROM balances
+				INNER JOIN orders ON balances.order_id = orders.id 
+			WHERE balances.user_id = ($1) AND sum < 0;`
+	rows, err := conn.Query(ctx, sql, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +91,12 @@ func (b *BalancesDB) Withdrawals(user string) ([]models.OrderBalance, error) {
 		if err := rows.Scan(&order.Order, &order.Sum, &order.ProcessedAt.Time); err != nil {
 			return nil, err
 		}
-		order.Sum = -order.Sum
 		orders = append(orders, *order)
 	}
 	return orders, nil
 }
 
-func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
+func (b *BalancesDB) Accrual(userID int, order models.AccrualOrder) error {
 	ctx := context.Background()
 	conn, err := b.pool.Acquire(ctx)
 	if err != nil {
@@ -101,7 +104,7 @@ func (b *BalancesDB) Accrual(user string, order models.AccrualOrder) error {
 	}
 	defer conn.Release()
 
-	_, err = conn.Exec(ctx, `INSERT INTO balances(processed_at, "user", "order", sum) VALUES ($1, $2, $3, $4);`, time.Now(), user, order.Order, order.Accrual)
+	_, err = conn.Exec(ctx, sqlInsertBalance, time.Now(), userID, order.Order, order.Accrual)
 	if err != nil {
 		return err
 	}

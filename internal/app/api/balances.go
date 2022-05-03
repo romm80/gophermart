@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
@@ -10,7 +9,13 @@ import (
 )
 
 func (a *API) getBalance(c *gin.Context) {
-	balance, err := a.Services.CurrentBalance(c.GetString("user"))
+	userID := c.GetInt("user_id")
+	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
+		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
+
+	balance, err := a.Services.CurrentBalance(userID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -26,25 +31,29 @@ func (a *API) withdraw(c *gin.Context) {
 		return
 	}
 
-	err := a.Services.BalancesService.Withdraw(c.GetString("user"), order)
+	userID := c.GetInt("user_id")
+	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
+		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
+
+	err := a.Services.BalancesService.Withdraw(userID, order)
 
 	if err != nil {
-		if errors.Is(err, app.ErrNotEnoughFunds) {
-			c.AbortWithStatus(http.StatusPaymentRequired)
-			return
-		}
-		if errors.Is(err, app.ErrInvalidOrderFormat) {
-			c.AbortWithStatus(http.StatusUnprocessableEntity)
-			return
-		}
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}
 	c.Status(http.StatusOK)
 }
 
 func (a *API) withdrawals(c *gin.Context) {
-	orders, err := a.Services.Withdrawals(c.GetString("user"))
+	userID := c.GetInt("user_id")
+	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
+		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
+
+	orders, err := a.Services.Withdrawals(userID)
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/romm80/gophermart.git/internal/app/server"
@@ -33,7 +34,7 @@ func migrateDB() error {
 		return err
 	}
 
-	if err := m.Up(); err != nil && err.Error() != "no change" {
+	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return err
 	}
 	return nil

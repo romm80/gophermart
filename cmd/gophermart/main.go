@@ -22,6 +22,7 @@ func main() {
 	flag.StringVar(&server.CFG.Accrual, "r", server.CFG.Accrual, "Accrual address")
 	flag.Parse()
 	server.CFG.Key = []byte("secret_key")
+	server.CFG.WorkerPoolSize = 1000
 
 	dbpool, err := postgres.NewPostgresDB()
 	if err != nil {

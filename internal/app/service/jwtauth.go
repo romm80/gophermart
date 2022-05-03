@@ -14,7 +14,7 @@ import (
 
 type tokenClaims struct {
 	jwt.StandardClaims
-	Login string `json:"login"`
+	UserID int `json:"user_id"`
 }
 
 type JWTAuth struct {
@@ -25,57 +25,62 @@ func NewAuth(store storage.AuthStore) *JWTAuth {
 	return &JWTAuth{store: store}
 }
 
-func (a *JWTAuth) CreateUser(user models.User) error {
+func (a *JWTAuth) CreateUser(user models.User) (string, error) {
 	if user.Login == "" || user.Password == "" {
-		return app.ErrInvalidLoginOrPassword
+		return "", app.ErrInvalidLoginOrPassword
 	}
 
 	hashPass, err := hashPassword(user.Password)
 	if err != nil {
-		return err
+		return "", err
 	}
 	user.Password = hashPass
-	return a.store.CreateUser(user)
+	userID, err := a.store.CreateUser(user)
+	if err != nil {
+		return "", err
+	}
+
+	return generateToken(userID)
 }
 
-func (a *JWTAuth) GenerateToken(user models.User) (string, error) {
+func (a *JWTAuth) LoginUser(user models.User) (string, error) {
 	hashPass, err := hashPassword(user.Password)
 	if err != nil {
 		return "", err
 	}
 	user.Password = hashPass
 
-	if err := a.store.GetUser(user); err != nil {
+	userID, err := a.store.GetUserID(user)
+	if err != nil {
 		return "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-		user.Login,
-	})
-
-	return token.SignedString(server.CFG.Key)
+	return generateToken(userID)
 }
 
-func (a *JWTAuth) ParseToken(tokenStr string) (string, error) {
+func (a *JWTAuth) ParseToken(tokenStr string) (int, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &tokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return server.CFG.Key, nil
 	})
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 	if !token.Valid {
-		return "", app.ErrTokenIsNotValid
+		return 0, app.ErrTokenIsNotValid
 	}
 	claim, ok := token.Claims.(*tokenClaims)
 	if !ok {
-		return "", app.ErrTokenIsNotValid
+		return 0, app.ErrTokenIsNotValid
+	}
+	if err := a.ValidUserID(claim.UserID); err != nil {
+		return 0, err
 	}
 
-	return claim.Login, nil
+	return claim.UserID, nil
+}
+
+func (a *JWTAuth) ValidUserID(userID int) error {
+	return a.store.ValidUserID(userID)
 }
 
 func hashPassword(password string) (string, error) {
@@ -85,4 +90,16 @@ func hashPassword(password string) (string, error) {
 	}
 	res := h.Sum(nil)
 	return hex.EncodeToString(res), nil
+}
+
+func generateToken(userID int) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
+			IssuedAt:  time.Now().Unix(),
+		},
+		userID,
+	})
+
+	return token.SignedString(server.CFG.Key)
 }

@@ -5,21 +5,22 @@ import (
 )
 
 type AuthStore interface {
-	CreateUser(user models.User) error
-	GetUser(user models.User) error
+	CreateUser(user models.User) (int, error)
+	GetUserID(user models.User) (int, error)
+	ValidUserID(userID int) error
 }
 
 type OrdersStore interface {
 	AddOrder(order models.Order) error
 	UpdateOrder(order models.AccrualOrder) error
-	GetOrders(user string) ([]models.Order, error)
+	GetOrders(userID int) ([]models.Order, error)
 }
 
 type BalancesStore interface {
-	CurrentBalance(user string) (*models.CurrentBalance, error)
-	Withdraw(user string, order models.OrderBalance) error
-	Withdrawals(user string) ([]models.OrderBalance, error)
-	Accrual(user string, order models.AccrualOrder) error
+	CurrentBalance(userID int) (*models.CurrentBalance, error)
+	Withdraw(userID int, order models.OrderBalance) error
+	Withdrawals(userID int) ([]models.OrderBalance, error)
+	Accrual(userID int, order models.AccrualOrder) error
 }
 
 type Storage struct {

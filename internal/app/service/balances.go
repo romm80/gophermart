@@ -14,22 +14,21 @@ func NewBalances(store storage.BalancesStore) *Balances {
 	return &Balances{store: store}
 }
 
-func (b *Balances) CurrentBalance(user string) (*models.CurrentBalance, error) {
-	return b.store.CurrentBalance(user)
+func (b *Balances) CurrentBalance(userID int) (*models.CurrentBalance, error) {
+	return b.store.CurrentBalance(userID)
 }
 
-func (b *Balances) Withdraw(user string, order models.OrderBalance) error {
+func (b *Balances) Withdraw(userID int, order models.OrderBalance) error {
 	if !checkLuhn(order.Order) {
 		return app.ErrInvalidOrderFormat
 	}
-
-	return b.store.Withdraw(user, order)
+	return b.store.Withdraw(userID, order)
 }
 
-func (b *Balances) Withdrawals(user string) ([]models.OrderBalance, error) {
-	return b.store.Withdrawals(user)
+func (b *Balances) Withdrawals(userID int) ([]models.OrderBalance, error) {
+	return b.store.Withdrawals(userID)
 }
 
-func (b *Balances) Accrual(user string, order models.AccrualOrder) error {
-	return b.store.Accrual(user, order)
+func (b *Balances) Accrual(userID int, order models.AccrualOrder) error {
+	return b.store.Accrual(userID, order)
 }
