@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/romm80/gophermart.git/internal/app"
 	"github.com/romm80/gophermart.git/internal/app/models"
@@ -38,6 +39,10 @@ func (a *API) withdraw(c *gin.Context) {
 	}
 
 	if err := a.Services.OrdersService.UploadOrder(userID, order.Order); err != nil {
+		if errors.Is(err, app.ErrOrderUploaded) {
+			c.AbortWithStatus(http.StatusUnprocessableEntity)
+			return
+		}
 		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}

@@ -21,7 +21,7 @@ func ErrStatusCode(err error) int {
 	switch {
 	case errors.Is(err, ErrLoginIsUsed) || errors.Is(err, ErrOrderUploadedAnotherUser):
 		return http.StatusConflict
-	case errors.Is(err, ErrInvalidLoginOrPassword) || errors.Is(err, ErrInvalidRequestFormat):
+	case errors.Is(err, ErrInvalidRequestFormat):
 		return http.StatusBadRequest
 	case errors.Is(err, ErrInvalidLoginOrPassword) || errors.Is(err, ErrInvalidUserID) || errors.Is(err, ErrTokenIsNotValid):
 		return http.StatusUnauthorized
