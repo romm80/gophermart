@@ -87,11 +87,11 @@ func (b *BalancesDB) Withdrawals(userID int) ([]models.OrderBalance, error) {
 	}
 	orders := make([]models.OrderBalance, 0)
 	for rows.Next() {
-		order := &models.OrderBalance{}
+		order := models.OrderBalance{}
 		if err := rows.Scan(&order.Order, &order.Sum, &order.ProcessedAt.Time); err != nil {
 			return nil, err
 		}
-		orders = append(orders, *order)
+		orders = append(orders, order)
 	}
 	return orders, nil
 }

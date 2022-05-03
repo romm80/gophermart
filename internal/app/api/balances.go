@@ -37,9 +37,12 @@ func (a *API) withdraw(c *gin.Context) {
 		return
 	}
 
-	err := a.Services.BalancesService.Withdraw(userID, order)
+	if err := a.Services.OrdersService.UploadOrder(userID, order.Order); err != nil {
+		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
 
-	if err != nil {
+	if err := a.Services.BalancesService.Withdraw(userID, order); err != nil {
 		c.AbortWithStatus(app.ErrStatusCode(err))
 		return
 	}
