@@ -7,7 +7,6 @@ import (
 type AuthStore interface {
 	CreateUser(user models.User) (int, error)
 	GetUserID(user models.User) (int, error)
-	ValidUserID(userID int) error
 }
 
 type OrdersStore interface {

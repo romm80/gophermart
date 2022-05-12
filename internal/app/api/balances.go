@@ -11,8 +11,8 @@ import (
 
 func (a *API) getBalance(c *gin.Context) {
 	userID := c.GetInt("user_id")
-	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
-		c.AbortWithStatus(app.ErrStatusCode(err))
+	if userID <= 0 {
+		c.AbortWithStatus(app.ErrStatusCode(app.ErrInvalidUserID))
 		return
 	}
 
@@ -33,8 +33,8 @@ func (a *API) withdraw(c *gin.Context) {
 	}
 
 	userID := c.GetInt("user_id")
-	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
-		c.AbortWithStatus(app.ErrStatusCode(err))
+	if userID <= 0 {
+		c.AbortWithStatus(app.ErrStatusCode(app.ErrInvalidUserID))
 		return
 	}
 
@@ -56,8 +56,8 @@ func (a *API) withdraw(c *gin.Context) {
 
 func (a *API) withdrawals(c *gin.Context) {
 	userID := c.GetInt("user_id")
-	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
-		c.AbortWithStatus(app.ErrStatusCode(err))
+	if userID <= 0 {
+		c.AbortWithStatus(app.ErrStatusCode(app.ErrInvalidUserID))
 		return
 	}
 

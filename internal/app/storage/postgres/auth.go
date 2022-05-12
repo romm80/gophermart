@@ -54,22 +54,3 @@ func (a *AuthDB) GetUserID(user models.User) (int, error) {
 	}
 	return userID, nil
 }
-
-func (a *AuthDB) ValidUserID(userID int) error {
-	ctx := context.Background()
-	conn, err := a.pool.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-
-	rows, err := conn.Query(ctx, `SELECT 1 FROM users WHERE id = ($1)`, userID)
-	if err != nil {
-		return err
-	}
-
-	if rows.Next() {
-		return nil
-	}
-	return app.ErrInvalidUserID
-}

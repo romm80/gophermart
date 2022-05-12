@@ -9,7 +9,6 @@ type AuthService interface {
 	CreateUser(user models.User) (string, error)
 	LoginUser(user models.User) (string, error)
 	ParseToken(token string) (int, error)
-	ValidUserID(userID int) error
 }
 
 type OrdersService interface {

@@ -17,18 +17,18 @@ func (a *API) uploadOrder(c *gin.Context) {
 	}
 
 	userID := c.GetInt("user_id")
-	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
-		c.AbortWithStatus(app.ErrStatusCode(err))
+	if userID <= 0 {
+		c.AbortWithStatus(app.ErrStatusCode(app.ErrInvalidUserID))
 		return
 	}
 
 	err = a.Services.OrdersService.UploadOrder(userID, string(order))
-	if err != nil {
-		if errors.Is(err, app.ErrOrderUploaded) {
-			c.Status(http.StatusOK)
-			return
-		}
+	if err != nil && !errors.Is(err, app.ErrOrderUploaded) {
 		c.AbortWithStatus(app.ErrStatusCode(err))
+		return
+	}
+	if errors.Is(err, app.ErrOrderUploaded) {
+		c.Status(http.StatusOK)
 		return
 	}
 
@@ -41,8 +41,8 @@ func (a *API) uploadOrder(c *gin.Context) {
 
 func (a *API) getOrders(c *gin.Context) {
 	userID := c.GetInt("user_id")
-	if err := a.Services.AuthService.ValidUserID(userID); err != nil {
-		c.AbortWithStatus(app.ErrStatusCode(err))
+	if userID <= 0 {
+		c.AbortWithStatus(app.ErrStatusCode(app.ErrInvalidUserID))
 		return
 	}
 

@@ -72,15 +72,8 @@ func (a *JWTAuth) ParseToken(tokenStr string) (int, error) {
 	if !ok {
 		return 0, app.ErrTokenIsNotValid
 	}
-	if err := a.ValidUserID(claim.UserID); err != nil {
-		return 0, err
-	}
 
 	return claim.UserID, nil
-}
-
-func (a *JWTAuth) ValidUserID(userID int) error {
-	return a.store.ValidUserID(userID)
 }
 
 func hashPassword(password string) (string, error) {
@@ -93,10 +86,11 @@ func hashPassword(password string) (string, error) {
 }
 
 func generateToken(userID int) (string, error) {
+	now := time.Now()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &tokenClaims{
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(24 * time.Hour).Unix(),
-			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: now.Add(24 * time.Hour).Unix(),
+			IssuedAt:  now.Unix(),
 		},
 		userID,
 	})

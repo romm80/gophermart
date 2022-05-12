@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"log"
 	"net/http"
 )
 
@@ -18,6 +19,8 @@ var (
 )
 
 func ErrStatusCode(err error) int {
+	log.Println(err)
+
 	switch {
 	case errors.Is(err, ErrLoginIsUsed) || errors.Is(err, ErrOrderUploadedAnotherUser):
 		return http.StatusConflict
